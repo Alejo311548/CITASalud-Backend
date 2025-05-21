@@ -24,7 +24,7 @@ Integración completa de frontend (vercel) y backend (Render).
 
 ## Documentación del sprint 1
 
-**[Repositorio del Frontend](https://drive.google.com/file/d/1IUWsaFh7KQK76mkrbNve1ncjN6Z0cgG_/view?usp=sharing)**
+**[Repositorio del Frontend](https://github.com/Alejo311548/CITASalud-Frontend.git)**
 
 
 ---
