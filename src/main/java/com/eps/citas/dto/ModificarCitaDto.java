@@ -8,7 +8,7 @@ public class ModificarCitaDto {
     private Long sedeId;
     private LocalDateTime nuevaFechaHora;
 
-    // Constructor vacío obligatorio para que Spring deserialice correctamente
+
     public ModificarCitaDto() {
     }
 

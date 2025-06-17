@@ -76,7 +76,7 @@ public class CitaController {
         }
     }
 
-    @PutMapping("/{id}/modificar")
+    @PutMapping("/modificar/{id}")
     public ResponseEntity<?> modificarCita(
             @PathVariable Long id,
             @RequestBody ModificarCitaDto dto,
