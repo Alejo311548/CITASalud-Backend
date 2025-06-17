@@ -17,6 +17,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import jakarta.mail.MessagingException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class CitaService {
@@ -26,6 +28,9 @@ public class CitaService {
     private final DisponibilidadRepository disponibilidadRepository;
     private final UsuarioRepository usuarioRepository;
     private final SedeRepository sedeRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     private final MotivoCancelacionRepository motivoCancelacionRepository;
 
@@ -90,7 +95,29 @@ public class CitaService {
         cita.setEstado("AGENDADA");
 
         citaRepository.save(cita);
+
+        // Enviar correo de confirmación
+        String asunto = "Confirmación de Cita Médica";
+        String cuerpoHtml = "<h3>Estimado(a) " + usuario.getNombre() + ",</h3>"
+                + "<p>Su cita ha sido agendada exitosamente con los siguientes datos:</p>"
+                + "<ul>"
+                + "<li><strong>Profesional:</strong> " + profesional.getNombre() + "</li>"
+                + "<li><strong>Especialidad:</strong> " + profesional.getEspecialidad().getNombre() + "</li>"
+                + "<li><strong>Fecha y hora:</strong> " + dto.getFechaHora().toString() + "</li>"
+                + "<li><strong>Sede:</strong> " + sede.getNombre() + "</li>"
+                + "</ul>"
+                + "<p>Por favor, llegue con 15 minutos de anticipación.</p>"
+                + "<p>Gracias por usar nuestro sistema de citas.</p>"
+                + "<br><p><em>EPS CitaSalud</em></p>";
+
+        try {
+            emailService.enviarCorreoConfirmacion(usuario.getEmail(), asunto, cuerpoHtml);
+        } catch (MessagingException e) {
+            // Aquí puedes registrar un log, lanzar una excepción o ignorar si el envío de correo no es crítico
+            System.err.println("Error enviando correo: " + e.getMessage());
+        }
     }
+
 
     // NUEVO: Obtener citas por usuario (email)
     public List<Cita> obtenerCitasPorUsuario(String emailUsuario) {
@@ -136,7 +163,7 @@ public class CitaService {
         Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
 
-        
+
         if (!cita.getUsuario().getUsuarioId().equals(usuario.getUsuarioId())) {
             throw new IllegalArgumentException("No tienes permiso para modificar esta cita");
         }
