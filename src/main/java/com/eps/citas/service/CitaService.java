@@ -5,6 +5,8 @@ import com.eps.citas.dto.CrearCitaDto;
 import com.eps.citas.dto.SlotDisponibleDto;
 import com.eps.citas.model.*;
 import com.eps.citas.repository.*;
+import com.eps.citas.dto.ModificarCitaDto;
+
 
 import org.springframework.stereotype.Service;
 
@@ -125,4 +127,39 @@ public class CitaService {
 
         citaRepository.save(cita);
     }
+
+    public void modificarCita(Long citaId, String emailUsuario, ModificarCitaDto dto) {
+        Cita cita = citaRepository.findById(citaId)
+                .orElseThrow(() -> new IllegalArgumentException("Cita no encontrada"));
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuario)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        if (!cita.getUsuario().getUsuarioId().equals(usuario.getUsuarioId())) {
+            throw new IllegalArgumentException("No tienes permiso para modificar esta cita");
+        }
+
+        if ("CANCELADA".equalsIgnoreCase(cita.getEstado())) {
+            throw new IllegalArgumentException("No se puede modificar una cita cancelada");
+        }
+
+        // Verificar si la nueva fecha y hora ya está ocupada
+        if (citaRepository.existsByProfesional_ProfesionalIdAndFechaHora(dto.getProfesionalId(), dto.getNuevaFechaHora())) {
+            throw new IllegalArgumentException("La nueva hora ya está ocupada por el profesional");
+        }
+
+        Profesional nuevoProfesional = profesionalRepository.findById(dto.getProfesionalId())
+                .orElseThrow(() -> new IllegalArgumentException("Profesional no encontrado"));
+
+        Sede nuevaSede = sedeRepository.findById(dto.getSedeId())
+                .orElseThrow(() -> new IllegalArgumentException("Sede no encontrada"));
+
+        cita.setProfesional(nuevoProfesional);
+        cita.setSede(nuevaSede);
+        cita.setFechaHora(dto.getNuevaFechaHora());
+
+        citaRepository.save(cita);
+    }
+
+
 }

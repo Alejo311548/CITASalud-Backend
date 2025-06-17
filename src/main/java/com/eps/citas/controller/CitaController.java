@@ -2,9 +2,12 @@ package com.eps.citas.controller;
 
 import com.eps.citas.dto.CancelarCitaDto;
 import com.eps.citas.dto.CrearCitaDto;
+import com.eps.citas.dto.ModificarCitaDto;
 import com.eps.citas.dto.SlotDisponibleDto;
 import com.eps.citas.model.Cita;
 import com.eps.citas.service.CitaService;
+import com.eps.citas.dto.ModificarCitaDto;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,4 +75,26 @@ public class CitaController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al cancelar la cita");
         }
     }
+
+    @PutMapping("/{id}/modificar")
+    public ResponseEntity<?> modificarCita(
+            @PathVariable Long id,
+            @RequestBody ModificarCitaDto dto,
+            Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+        try {
+            citaService.modificarCita(id, principal.getName(), dto);
+            return ResponseEntity.ok("Cita modificada correctamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al modificar la cita");
+        }
+    }
+
+
 }
