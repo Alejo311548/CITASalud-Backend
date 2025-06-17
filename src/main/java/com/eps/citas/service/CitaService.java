@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CitaService {
@@ -160,6 +161,23 @@ public class CitaService {
 
         citaRepository.save(cita);
     }
+
+    public Cita obtenerCitaPorIdYUsuario(Long id, String emailUsuario) {
+        Optional<Cita> citaOpt = citaRepository.findById(id);
+
+        if (citaOpt.isPresent()) {
+            Cita cita = citaOpt.get();
+
+            if (cita.getUsuario() != null &&
+                    emailUsuario.equals(cita.getUsuario().getEmail())) {
+                return cita;
+            }
+        }
+
+        return null; // No encontrada o no pertenece al usuario autenticado
+    }
+
+
 
 
 }

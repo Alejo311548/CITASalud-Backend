@@ -96,5 +96,22 @@ public class CitaController {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> obtenerCitaPorId(@PathVariable Long id, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+        try {
+            Cita cita = citaService.obtenerCitaPorIdYUsuario(id, principal.getName());
+            if (cita == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cita no encontrada");
+            }
+            return ResponseEntity.ok(cita);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener la cita");
+        }
+    }
+
+
 
 }
