@@ -80,22 +80,44 @@ public class CitaService {
             throw new IllegalArgumentException("Ese horario ya está ocupado");
         }
 
-        Cita cita = new Cita();
-
         Profesional profesional = profesionalRepository.findById(dto.getProfesionalId())
                 .orElseThrow(() -> new RuntimeException("Profesional no encontrado"));
 
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new RuntimeException("Sede no encontrada"));
 
+        Cita cita = new Cita();
         cita.setUsuario(usuario);
         cita.setProfesional(profesional);
         cita.setSede(sede);
         cita.setFechaHora(dto.getFechaHora());
         cita.setEstado("AGENDADA");
 
+        // Agendar cita primero
         citaRepository.save(cita);
+
+        // Preparar correo de confirmación
+        String asunto = "Confirmación de Cita Médica";
+        String cuerpoHtml = "<h3>Estimado(a) " + usuario.getNombre() + ",</h3>"
+                + "<p>Su cita ha sido agendada exitosamente con los siguientes datos:</p>"
+                + "<ul>"
+                + "<li><strong>Profesional:</strong> " + profesional.getNombre() + "</li>"
+                + "<li><strong>Especialidad:</strong> " + profesional.getEspecialidad().getNombre() + "</li>"
+                + "<li><strong>Fecha y hora:</strong> " + dto.getFechaHora().toString() + "</li>"
+                + "<li><strong>Sede:</strong> " + sede.getNombre() + "</li>"
+                + "</ul>"
+                + "<p>Por favor, llegue con 15 minutos de anticipación.</p>"
+                + "<p>Gracias por usar nuestro sistema de citas.</p>"
+                + "<br><p><em>EPS CitaSalud</em></p>";
+
+        // Intentar enviar el correo, pero sin afectar la cita si falla
+        try {
+            emailService.enviarCorreoConfirmacion(usuario.getEmail(), asunto, cuerpoHtml);
+        } catch (Exception e) {
+            System.err.println("No se pudo enviar el correo de confirmación: " + e.getMessage());
+        }
     }
+
 
     // NUEVO: Obtener citas por usuario (email)
     public List<Cita> obtenerCitasPorUsuario(String emailUsuario) {
