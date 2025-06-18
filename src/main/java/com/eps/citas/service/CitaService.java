@@ -94,32 +94,8 @@ public class CitaService {
         cita.setFechaHora(dto.getFechaHora());
         cita.setEstado("AGENDADA");
 
-        // Primero guardamos la cita sin importar el correo
         citaRepository.save(cita);
-
-        // Luego intentamos enviar el correo, pero sin afectar la operación
-        String asunto = "Confirmación de Cita Médica";
-        String cuerpoHtml = "<h3>Estimado(a) " + usuario.getNombre() + ",</h3>"
-                + "<p>Su cita ha sido agendada exitosamente con los siguientes datos:</p>"
-                + "<ul>"
-                + "<li><strong>Profesional:</strong> " + profesional.getNombre() + "</li>"
-                + "<li><strong>Especialidad:</strong> " + profesional.getEspecialidad().getNombre() + "</li>"
-                + "<li><strong>Fecha y hora:</strong> " + dto.getFechaHora().toString() + "</li>"
-                + "<li><strong>Sede:</strong> " + sede.getNombre() + "</li>"
-                + "</ul>"
-                + "<p>Por favor, llegue con 15 minutos de anticipación.</p>"
-                + "<p>Gracias por usar nuestro sistema de citas.</p>"
-                + "<br><p><em>EPS CitaSalud</em></p>";
-
-        try {
-            emailService.enviarCorreoConfirmacion(usuario.getEmail(), asunto, cuerpoHtml);
-        } catch (MessagingException e) {
-            // Solo se registra el error, no se lanza excepción para que no afecte la agenda
-            System.err.println("Error enviando correo: " + e.getMessage());
-        }
     }
-
-
 
     // NUEVO: Obtener citas por usuario (email)
     public List<Cita> obtenerCitasPorUsuario(String emailUsuario) {
