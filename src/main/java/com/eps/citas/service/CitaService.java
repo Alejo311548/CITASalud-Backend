@@ -94,9 +94,10 @@ public class CitaService {
         cita.setFechaHora(dto.getFechaHora());
         cita.setEstado("AGENDADA");
 
+        // Primero guardamos la cita sin importar el correo
         citaRepository.save(cita);
 
-        // Enviar correo de confirmación
+        // Luego intentamos enviar el correo, pero sin afectar la operación
         String asunto = "Confirmación de Cita Médica";
         String cuerpoHtml = "<h3>Estimado(a) " + usuario.getNombre() + ",</h3>"
                 + "<p>Su cita ha sido agendada exitosamente con los siguientes datos:</p>"
@@ -113,10 +114,11 @@ public class CitaService {
         try {
             emailService.enviarCorreoConfirmacion(usuario.getEmail(), asunto, cuerpoHtml);
         } catch (MessagingException e) {
-            // Aquí puedes registrar un log, lanzar una excepción o ignorar si el envío de correo no es crítico
+            // Solo se registra el error, no se lanza excepción para que no afecte la agenda
             System.err.println("Error enviando correo: " + e.getMessage());
         }
     }
+
 
 
     // NUEVO: Obtener citas por usuario (email)
