@@ -15,6 +15,8 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void enviarCorreoConfirmacion(String destinatario, String asunto, String cuerpoHtml) throws MessagingException {
+        System.out.println("Preparando correo a: " + destinatario);
+
         MimeMessage mensaje = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mensaje, true, "UTF-8");
 
@@ -24,6 +26,8 @@ public class EmailService {
         helper.setText(cuerpoHtml, true);
 
         mailSender.send(mensaje);
+        System.out.println("Correo enviado correctamente a: " + destinatario);
     }
 }
+
 
