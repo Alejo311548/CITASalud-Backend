@@ -1,21 +1,24 @@
 package com.eps.citas.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Credenciales necesarias para iniciar sesión")
 public class LoginDto {
+
+    @Schema(description = "Correo electrónico del usuario", example = "usuario@ejemplo.com", required = true)
     private String email;
+
+    @Schema(description = "Contraseña del usuario", example = "miContraseñaSegura123", required = true)
     private String password;
 
-    // Constructor vacío
     public LoginDto() {
     }
 
-    // Constructor con parámetros
     public LoginDto(String email, String password) {
         this.email = email;
         this.password = password;
     }
 
-    // Getter y Setter para email
     public String getEmail() {
         return email;
     }
@@ -24,7 +27,6 @@ public class LoginDto {
         this.email = email;
     }
 
-    // Getter y Setter para password
     public String getPassword() {
         return password;
     }
@@ -33,7 +35,6 @@ public class LoginDto {
         this.password = password;
     }
 
-    // Método toString
     @Override
     public String toString() {
         return "LoginDto{" +
@@ -41,4 +42,3 @@ public class LoginDto {
                 ", password='[PROTECTED]'}";
     }
 }
-

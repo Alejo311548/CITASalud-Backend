@@ -1,28 +1,33 @@
 package com.eps.citas.controller;
 
 import com.eps.citas.dto.JwtResponseDto;
+import com.eps.citas.dto.LoginDto;
 import com.eps.citas.dto.RegistroUsuarioDto;
 import com.eps.citas.model.Usuario;
 import com.eps.citas.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import com.eps.citas.dto.LoginDto;
 import com.eps.citas.auth.util.JwtTokenUtil;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Autenticación", description = "Operaciones de login y registro de usuarios")
 @RestController
@@ -37,6 +42,15 @@ public class AuthController {
 
     @Autowired
     private UserDetailsService userDetailsService;
+
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Operation(summary = "Autenticar usuario", description = "Genera un token JWT a partir del email y la contraseña.")
     @ApiResponses(value = {
@@ -54,19 +68,18 @@ public class AuthController {
             );
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtUtil.generateToken(userDetails.getUsername());
-            return ResponseEntity.ok(new JwtResponseDto(token));
+
+            EntityModel<JwtResponseDto> resource = EntityModel.of(
+                    new JwtResponseDto(token),
+                    linkTo(methodOn(AuthController.class).login(loginRequest)).withSelfRel(),
+                    linkTo(methodOn(AuthController.class).register(null)).withRel("register"),
+                    linkTo(methodOn(AuthController.class).registerProfesional(null)).withRel("registerProfesional")
+            );
+
+            return ResponseEntity.ok(resource);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
         }
-    }
-
-    private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    @Autowired
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Operation(summary = "Registrar paciente", description = "Registra un nuevo usuario paciente en el sistema.")
@@ -88,7 +101,13 @@ public class AuthController {
         usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         usuarioRepository.save(usuario);
 
-        return ResponseEntity.ok("Registro exitoso.");
+        EntityModel<String> response = EntityModel.of(
+                "Registro exitoso.",
+                linkTo(methodOn(AuthController.class).register(dto)).withSelfRel(),
+                linkTo(methodOn(AuthController.class).login(new LoginDto(dto.getEmail(), dto.getPassword()))).withRel("login")
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Registrar profesional", description = "Registra un nuevo usuario con rol profesional.")
@@ -110,6 +129,12 @@ public class AuthController {
         profesional.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         usuarioRepository.save(profesional);
 
-        return ResponseEntity.ok("Profesional registrado exitosamente.");
+        EntityModel<String> response = EntityModel.of(
+                "Profesional registrado exitosamente.",
+                linkTo(methodOn(AuthController.class).registerProfesional(dto)).withSelfRel(),
+                linkTo(methodOn(AuthController.class).login(new LoginDto(dto.getEmail(), dto.getPassword()))).withRel("login")
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

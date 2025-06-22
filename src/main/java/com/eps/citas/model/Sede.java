@@ -1,17 +1,25 @@
 package com.eps.citas.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "sedes")
+@Schema(description = "Representa una sede o ubicación física donde se prestan los servicios médicos.")
 public class Sede {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Identificador único de la sede", example = "1")
     private Long sedeId;
 
+    @Schema(description = "Nombre de la sede", example = "Centro Médico Norte")
     private String nombre;
+
+    @Schema(description = "Dirección de la sede", example = "Calle 123 #45-67, Bogotá")
     private String direccion;
+
+    @Schema(description = "Teléfono de contacto de la sede", example = "+57 301 2345678")
     private String telefono;
 
     // Constructor vacío

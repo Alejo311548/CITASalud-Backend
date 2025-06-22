@@ -1,23 +1,29 @@
 package com.eps.citas.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "profesionales")
+@Schema(description = "Representa a un profesional de la salud que atiende citas.")
 public class Profesional {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Identificador único del profesional", example = "101")
     private Long profesionalId;
 
+    @Schema(description = "Nombre completo del profesional", example = "Dra. Camila Ríos")
     private String nombre;
 
     @ManyToOne
     @JoinColumn(name = "especialidad_id", nullable = false)
+    @Schema(description = "Especialidad médica del profesional")
     private Especialidad especialidad;
 
     @ManyToOne
     @JoinColumn(name = "sede_id", nullable = false)
+    @Schema(description = "Sede en la que trabaja el profesional")
     private Sede sede;
 
     // Constructor vacío
