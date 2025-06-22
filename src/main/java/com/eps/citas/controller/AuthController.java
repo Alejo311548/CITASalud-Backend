@@ -16,13 +16,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
-
 import org.springframework.security.core.userdetails.UserDetails;
 
-
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
-
+@Tag(name = "Autenticación", description = "Operaciones de login y registro de usuarios")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -36,24 +38,22 @@ public class AuthController {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Operation(summary = "Autenticar usuario", description = "Genera un token JWT a partir del email y la contraseña.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Autenticación exitosa, devuelve el token JWT"),
+            @ApiResponse(responseCode = "401", description = "Credenciales inválidas")
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginRequest) {
         try {
-            // 1. Autenticar
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
                             loginRequest.getPassword()
                     )
             );
-
-            // 2. Obtener userDetails desde el objeto autenticado
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-            // 3. Generar token
             String token = jwtUtil.generateToken(userDetails.getUsername());
-
-            // 4. Devolver token
             return ResponseEntity.ok(new JwtResponseDto(token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
@@ -69,6 +69,11 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Operation(summary = "Registrar paciente", description = "Registra un nuevo usuario paciente en el sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Email ya registrado")
+    })
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegistroUsuarioDto dto) {
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
@@ -86,6 +91,11 @@ public class AuthController {
         return ResponseEntity.ok("Registro exitoso.");
     }
 
+    @Operation(summary = "Registrar profesional", description = "Registra un nuevo usuario con rol profesional.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profesional registrado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Email ya registrado")
+    })
     @PostMapping("/register/profesional")
     public ResponseEntity<?> registerProfesional(@RequestBody @Valid RegistroUsuarioDto dto) {
         if (usuarioRepository.findByEmail(dto.getEmail()).isPresent()) {
@@ -102,7 +112,4 @@ public class AuthController {
 
         return ResponseEntity.ok("Profesional registrado exitosamente.");
     }
-
-
-
 }
