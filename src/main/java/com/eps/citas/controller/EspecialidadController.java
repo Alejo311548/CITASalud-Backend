@@ -7,17 +7,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Especialidades", description = "Operaciones para crear y consultar especialidades médicas")
 @RestController
@@ -29,32 +26,26 @@ public class EspecialidadController {
 
     @Operation(summary = "Crear especialidad", description = "Crea una nueva especialidad médica.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Especialidad creada exitosamente"),
+            @ApiResponse(responseCode = "200", description = "Especialidad creada exitosamente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Especialidad.class))),
             @ApiResponse(responseCode = "400", description = "Datos inválidos")
     })
     @PostMapping
-    public ResponseEntity<EntityModel<Especialidad>> crear(@RequestBody Especialidad especialidad) {
+    public ResponseEntity<Especialidad> crear(@RequestBody Especialidad especialidad) {
         Especialidad creada = repository.save(especialidad);
-        EntityModel<Especialidad> model = EntityModel.of(creada,
-                linkTo(methodOn(EspecialidadController.class).crear(especialidad)).withSelfRel(),
-                linkTo(methodOn(EspecialidadController.class).obtenerTodas()).withRel("todas"));
-
-        return ResponseEntity.ok(model);
+        return ResponseEntity.ok(creada);
     }
 
     @Operation(summary = "Listar especialidades", description = "Obtiene todas las especialidades médicas registradas.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de especialidades obtenida correctamente")
+            @ApiResponse(responseCode = "200", description = "Lista de especialidades obtenida correctamente",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Especialidad.class)))
     })
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<Especialidad>>> obtenerTodas() {
-        List<EntityModel<Especialidad>> especialidades = repository.findAll()
-                .stream()
-                .map(especialidad -> EntityModel.of(especialidad,
-                        linkTo(methodOn(EspecialidadController.class).crear(especialidad)).withRel("crear")
-                )).collect(Collectors.toList());
-
-        return ResponseEntity.ok(CollectionModel.of(especialidades,
-                linkTo(methodOn(EspecialidadController.class).obtenerTodas()).withSelfRel()));
+    public ResponseEntity<List<Especialidad>> obtenerTodas() {
+        List<Especialidad> especialidades = repository.findAll();
+        return ResponseEntity.ok(especialidades);
     }
 }

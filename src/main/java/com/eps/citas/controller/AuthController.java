@@ -10,7 +10,6 @@ import com.eps.citas.auth.util.JwtTokenUtil;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,11 +22,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Tag(name = "Autenticación", description = "Operaciones de login y registro de usuarios")
 @RestController
@@ -54,7 +53,9 @@ public class AuthController {
 
     @Operation(summary = "Autenticar usuario", description = "Genera un token JWT a partir del email y la contraseña.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Autenticación exitosa, devuelve el token JWT"),
+            @ApiResponse(responseCode = "200", description = "Autenticación exitosa, devuelve el token JWT",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = JwtResponseDto.class))),
             @ApiResponse(responseCode = "401", description = "Credenciales inválidas")
     })
     @PostMapping("/login")
@@ -69,14 +70,7 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String token = jwtUtil.generateToken(userDetails.getUsername());
 
-            EntityModel<JwtResponseDto> resource = EntityModel.of(
-                    new JwtResponseDto(token),
-                    linkTo(methodOn(AuthController.class).login(loginRequest)).withSelfRel(),
-                    linkTo(methodOn(AuthController.class).register(null)).withRel("register"),
-                    linkTo(methodOn(AuthController.class).registerProfesional(null)).withRel("registerProfesional")
-            );
-
-            return ResponseEntity.ok(resource);
+            return ResponseEntity.ok(new JwtResponseDto(token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas");
         }
@@ -84,7 +78,8 @@ public class AuthController {
 
     @Operation(summary = "Registrar paciente", description = "Registra un nuevo usuario paciente en el sistema.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente"),
+            @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente",
+                    content = @Content(mediaType = "text/plain")),
             @ApiResponse(responseCode = "400", description = "Email ya registrado")
     })
     @PostMapping("/register")
@@ -101,18 +96,13 @@ public class AuthController {
         usuario.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         usuarioRepository.save(usuario);
 
-        EntityModel<String> response = EntityModel.of(
-                "Registro exitoso.",
-                linkTo(methodOn(AuthController.class).register(dto)).withSelfRel(),
-                linkTo(methodOn(AuthController.class).login(new LoginDto(dto.getEmail(), dto.getPassword()))).withRel("login")
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok("Registro exitoso.");
     }
 
     @Operation(summary = "Registrar profesional", description = "Registra un nuevo usuario con rol profesional.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Profesional registrado exitosamente"),
+            @ApiResponse(responseCode = "200", description = "Profesional registrado exitosamente",
+                    content = @Content(mediaType = "text/plain")),
             @ApiResponse(responseCode = "400", description = "Email ya registrado")
     })
     @PostMapping("/register/profesional")
@@ -129,12 +119,6 @@ public class AuthController {
         profesional.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         usuarioRepository.save(profesional);
 
-        EntityModel<String> response = EntityModel.of(
-                "Profesional registrado exitosamente.",
-                linkTo(methodOn(AuthController.class).registerProfesional(dto)).withSelfRel(),
-                linkTo(methodOn(AuthController.class).login(new LoginDto(dto.getEmail(), dto.getPassword()))).withRel("login")
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok("Profesional registrado exitosamente.");
     }
 }
